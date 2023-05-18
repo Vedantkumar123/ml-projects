@@ -1,0 +1,76 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import string
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer, WordNetLemmatizer
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+# Read in the dataset
+df=pd.read_csv(r"C:\Users\vedant kumar\Desktop\vedant information\vedant projects and works\ML projects\amazon_alexa.csv")
+print("null",df.isnull().sum())
+df = df.dropna()
+# Preprocess the text data
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+stop_words = set(stopwords.words('english'))
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+def preprocess_text(text):
+    tokens = word_tokenize(text)
+    tokens = [token.lower() for token in tokens]
+    tokens = [token.translate(str.maketrans('', '', string.punctuation)) for token in tokens]
+    tokens = [token for token in tokens if token not in stop_words]
+    # stemming or lemmatization
+    # stemmed_tokens = [stemmer.stem(token) for token in tokens]
+    # return " ".join(stemmed_tokens)
+    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
+    return " ".join(lemmatized_tokens)
+df['processed_reviews'] = df['verified_reviews'].apply(preprocess_text)
+X = df['processed_reviews'].values
+y = df['feedback'].values
+# Split the data into training and testing datasets
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+# Transform the text data into vectors using CountVectorizer
+vectorizer = CountVectorizer()
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec = vectorizer.transform(X_test)
+# Transform the text data into vectors using TF-IDF Vectorizer
+vectorizer = TfidfVectorizer()
+X_train_vector = vectorizer.fit_transform(X_train)
+X_test_vector = vectorizer.transform(X_test)
+
+# Train and evaluate the models
+models = [("Multinomial Naive Bayes", MultinomialNB()), ("Logistic Regression", LogisticRegression())]
+models_using_tdif=[("KNN Classification", KNeighborsClassifier())]
+model_score={}
+for name, model in models:
+    model.fit(X_train_vec, y_train)
+    y_pred = model.predict(X_test_vec)
+    print('Accuracy:', accuracy_score(y_test, y_pred))
+    print('Precision:', precision_score(y_test, y_pred))
+    print('Recall:', recall_score(y_test, y_pred))
+    print('F1 Score:', f1_score(y_test, y_pred))
+    print(f"Model: {name}\n{y_pred}\n{classification_report(y_test, y_pred,zero_division=0)}\n{confusion_matrix(y_test, y_pred)}\n")
+    missing_labels = np.setdiff1d(y_test, y_pred)
+    print('Labels with no predicted samples:', missing_labels)
+    model_score[model]=model.score(X_test_vec,y_test)
+for name, model in models_using_tdif:
+    model.fit(X_train_vector, y_train)
+    y_pred = model.predict(X_test_vector)
+    print(f"Model: {name}\n{y_pred}\n{classification_report(y_test, y_pred)}\n{confusion_matrix(y_test, y_pred)}\n")
+    model_score[model]=model.score(X_test_vector,y_test)
+# Select the best model and predict the feedback for the test data
+max_score = max(model_score.values())
+best_model = [k for k, v in model_score.items() if v == max_score][0]
+print(f"The best model is {best_model} with an accuracy of {max_score}")
+print(model_score)
