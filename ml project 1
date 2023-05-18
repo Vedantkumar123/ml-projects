@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+url = 'https://drive.google.com/uc?id=1sxQIi_lIhI25Jckbmbe6N_e8S3IUqx3l'
+df = pd.read_csv(url)
+X = df.iloc[:, :-1]
+y = df.iloc[:, -1]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+logreg = LogisticRegression()
+logreg.fit(X_train_scaled, y_train)
+y_pred = logreg.predict(X_test_scaled)
+lr_score=logreg.score(X_test_scaled, y_test)
+y_pred_test_logreg = logreg.predict(X_test_scaled)
+cm_lr= confusion_matrix(y_test, y_pred)
+cr_lr = classification_report(y_test, y_pred)
+print(y_pred_test_logreg)
+print("Confusion Matrix for lr:\n", cm_lr)
+print("\nClassification Report for lr:\n", cr_lr)
+
+knn = KNeighborsClassifier()
+knn.fit(X_train, y_train)
+knn_score=knn.score(X_test, y_test)
+y_pred_test_knn = knn.predict(X_test)
+cm_knn=confusion_matrix(y_test, y_pred_test_knn)
+cr_knn=classification_report(y_test, y_pred_test_knn)
+print(y_pred_test_knn)
+print("Confusion Matrix for knn:\n", cm_knn)
+print("\nClassification Report for knn:\n", cr_knn)
+
+svm_linear = SVC(kernel='linear', random_state=42)
+svm_linear.fit(X_train_scaled, y_train)
+y_pred_linear = svm_linear.predict(X_test_scaled)
+cm_svm_linear = confusion_matrix(y_test, y_pred_linear)
+cr_svm_linear = classification_report(y_test, y_pred_linear)
+svm_linear_score=svm_linear.score(X_test_scaled, y_test)
+print(y_pred_linear)
+print("Confusion Matrix for Linear SVM:\n", cm_svm_linear)
+print("\nClassification Report for Linear SVM:\n", cr_svm_linear)
+
+svm_rbf = SVC(kernel='rbf', random_state=42)
+svm_rbf.fit(X_train_scaled, y_train)
+y_pred_rbf = svm_rbf.predict(X_test_scaled)
+svm_rbf_score=svm_rbf.score(X_test_scaled, y_test)
+cm_svm_rbf = confusion_matrix(y_test, y_pred_rbf)
+cr_svm_rbf = classification_report(y_test, y_pred_rbf)
+print(y_pred_rbf)
+print("Confusion Matrix for rbf SVM:\n", cm_svm_rbf)
+print("\nClassification Report for rbf SVM:\n", cr_svm_rbf)
+
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+dt_pred = dt_model.predict(X_test)
+dt_score = dt_model.score(X_test, y_test)
+cm_dt = confusion_matrix(y_test, dt_pred)
+cr_dt=classification_report(y_test, dt_pred)
+print(dt_pred)
+print("Confusion Matrix for dt:\n", cm_dt)
+print("\nClassification Report for dt:\n", cr_dt)
+
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train_scaled, y_train)
+y_pred_rf = rf_model.predict(X_test_scaled)
+rf_score=rf_model.score(X_test_scaled,y_test)
+cm_rf=confusion_matrix(y_test, y_pred_rf)
+cr_rf=classification_report(y_test, y_pred_rf)
+print(y_pred_rf)
+print("Confusion Matrix for rf:\n", cm_rf)
+print("\nClassification Report for rf:\n", cr_rf)
+
+model_scores = {'Logistic Regression': lr_score, 'KNN': knn_score, 'SVM Linear': svm_linear_score, 'SVM RBF': svm_rbf_score, 'Decision Tree': dt_score, 'Random Forest': rf_score}
+max_score = max(model_scores.values())
+best_model = [k for k, v in model_scores.items() if v == max_score][0]
+print(f"The best model is {best_model} with an accuracy of {max_score}")
